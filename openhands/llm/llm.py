@@ -2,6 +2,7 @@ import copy
 import os
 import time
 import warnings
+from datetime import datetime
 from functools import partial
 from typing import Any, Callable
 
@@ -156,9 +157,9 @@ class LLM(RetryMixin, DebugMixin):
         self._completion = partial(
             litellm_completion,
             model=self.config.model,
-            api_key=self.config.api_key.get_secret_value()
-            if self.config.api_key
-            else None,
+            api_key=(
+                self.config.api_key.get_secret_value() if self.config.api_key else None
+            ),
             base_url=self.config.base_url,
             api_version=self.config.api_version,
             custom_llm_provider=self.config.custom_llm_provider,
@@ -246,6 +247,11 @@ class LLM(RetryMixin, DebugMixin):
             logger.debug(
                 f'LLM: calling litellm completion with model: {self.config.model}, base_url: {self.config.base_url}, args: {args}, kwargs: {kwargs}'
             )
+            trace_id = "openhands-" + datetime.now().strftime("%Y-%m-%dT%H")
+            kwargs['metadata'] = {
+                "trace_id": trace_id,
+            }
+            logger.info(f'llm kwargs: {kwargs}')
             resp: ModelResponse = self._completion_unwrapped(*args, **kwargs)
 
             # Calculate and record latency
