@@ -37,6 +37,14 @@ from openhands.llm.retry_mixin import RetryMixin
 
 __all__ = ['LLM']
 
+trace_id = "openhands-" + datetime.now().strftime("%Y-%m-%dT%H%M")
+
+# os.environ["LANGFUSE_PUBLIC_KEY"] = ""
+# os.environ["LANGFUSE_SECRET_KEY"] = ""
+os.environ["LANGFUSE_HOST"] = "https://us.cloud.langfuse.com"  # 🇺🇸 US region
+litellm.success_callback = ["langfuse"]
+litellm.failure_callback = ["langfuse"]
+
 # tuple of exceptions to retry on
 LLM_RETRY_EXCEPTIONS: tuple[type[Exception], ...] = (RateLimitError,)
 
@@ -247,11 +255,10 @@ class LLM(RetryMixin, DebugMixin):
             logger.debug(
                 f'LLM: calling litellm completion with model: {self.config.model}, base_url: {self.config.base_url}, args: {args}, kwargs: {kwargs}'
             )
-            trace_id = "openhands-" + datetime.now().strftime("%Y-%m-%dT%H")
             kwargs['metadata'] = {
                 "trace_id": trace_id,
             }
-            logger.info(f'llm kwargs: {kwargs}')
+            # logger.info(f'llm kwargs: {kwargs}')
             resp: ModelResponse = self._completion_unwrapped(*args, **kwargs)
 
             # Calculate and record latency

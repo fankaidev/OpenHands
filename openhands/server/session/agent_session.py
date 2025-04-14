@@ -1,6 +1,7 @@
 import asyncio
 import json
 import time
+from datetime import datetime
 from logging import LoggerAdapter
 from types import MappingProxyType
 from typing import Callable, cast
@@ -17,6 +18,7 @@ from openhands.events.action import ChangeAgentStateAction, MessageAction
 from openhands.events.event import Event, EventSource
 from openhands.events.stream import EventStream
 from openhands.integrations.provider import PROVIDER_TOKEN_TYPE, ProviderHandler
+from openhands.llm import llm
 from openhands.memory.memory import Memory
 from openhands.microagent.microagent import BaseMicroAgent
 from openhands.runtime import get_runtime_cls
@@ -180,6 +182,8 @@ class AgentSession:
                     'duration': (time.time() - started_at),
                 },
             )
+
+            llm.trace_id = "openhands-" + datetime.now().strftime("%Y-%m-%dT%H%M")
 
     async def close(self):
         """Closes the Agent session"""
