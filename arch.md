@@ -470,3 +470,81 @@ graph TD
        DELEGATING --> ERROR
        DELEGATING --> FINISHED
    ```
+
+## CodeActAgent 触发流程
+
+CodeActAgent 是通过事件驱动的方式被触发和执行的。整个流程由 AgentController 管理，主要包含以下步骤：
+
+### 1. 事件触发条件
+
+AgentController 通过 `should_step` 方法判断是否需要触发 agent 执行：
+
+- 收到用户消息（MessageAction 且来源是 USER）
+- 收到非等待用户输入状态下的消息
+- 收到委托动作（AgentDelegateAction）
+- 收到观察结果（Observation，但有一些特殊情况除外）
+
+### 2. 执行流程
+
+```mermaid
+sequenceDiagram
+    participant Event
+    participant Controller
+    participant CodeActAgent
+    participant EventStream
+
+    Event->>Controller: on_event()
+    Controller->>Controller: should_step()
+    Controller->>Controller: _step()
+    Controller->>CodeActAgent: step(state)
+    CodeActAgent-->>Controller: Action
+    Controller->>EventStream: add_event(action)
+```
+
+### 3. 主要步骤
+
+1. **事件接收**
+   - AgentController 通过 `on_event` 接收事件
+   - 将事件添加到历史记录
+   - 判断是否需要执行 step
+
+2. **执行控制**
+   - 检查执行条件（状态、限制等）
+   - 更新执行状态和指标
+   - 调用 CodeActAgent 的 step 方法
+   - 处理返回的 Action
+
+3. **动作处理**
+   - 如果动作需要执行（runnable），设置为 pending_action
+   - 创建前端显示的指标
+   - 将动作添加到事件流中
+   - 等待动作执行结果
+
+4. **状态更新**
+   - 更新 agent 状态
+   - 处理可能的错误
+   - 准备下一次执行
+
+### 4. 错误处理
+
+在执行过程中可能遇到的错误：
+
+- LLM 相关错误（格式错误、无动作、响应错误等）
+- 函数调用错误（验证错误、不存在的函数等）
+- 上下文长度超限错误
+- API 相关错误（认证、连接、服务等）
+
+### 5. 执行限制
+
+系统会对 CodeActAgent 的执行进行多方面的限制：
+
+- 最大迭代次数控制
+- 预算使用限制
+- 执行循环检测
+- 状态监控和超时控制
+
+这种事件驱动的执行方式确保了 CodeActAgent 能够：
+1. 响应式地处理用户请求和系统事件
+2. 维护清晰的执行状态
+3. 有效地管理资源使用
+4. 灵活地处理各种任务场景
