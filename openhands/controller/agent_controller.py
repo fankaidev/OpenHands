@@ -434,6 +434,7 @@ class AgentController:
         Args:
             action (MessageAction): The message action to handle.
         """
+        logger.info(f'Handling message action: {action}')
         if action.source == EventSource.USER:
             # Use info level if LOG_ALL_EVENTS is set
             log_level = (
