@@ -37,38 +37,3 @@ graph TD
     E --> F[触发新事件]
     F --> B
 ```
-
-### 实现细节
-
-#### 核心组件
-
-1. **EventStream**
-   - 事件流的主要管理器
-   - 维护订阅者列表
-   - 处理事件分发
-
-2. **EventQueue**
-   - 基于优先级的事件队列
-   - 确保事件按序处理
-   - 支持异步处理
-
-3. **EventBus**
-   - 提供发布-订阅模式接口
-   - 处理事件路由
-   - 管理事件生命周期
-
-#### 接口设计
-
-```python
-class IEventStream:
-    async def add_event(self, event: Event) -> None
-    async def subscribe(self, subscriber: EventSubscriber) -> None
-    async def unsubscribe(self, subscriber: EventSubscriber) -> None
-```
-
-#### 异常处理
-
-系统定义了以下异常类型：
-- `EventStreamError` - 事件流基础异常
-- `EventHandleError` - 事件处理异常
-- `InvalidEventError` - 无效事件异常
